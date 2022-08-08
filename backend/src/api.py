@@ -7,6 +7,7 @@ from flask_cors import CORS
 from .database.models import db_drop_and_create_all, setup_db, Drink
 from .auth.auth import AuthError, requires_auth
 
+
 # =============
 #  API Config
 # =============
@@ -15,6 +16,7 @@ app = Flask(__name__)
 setup_db(app)
 db_drop_and_create_all()
 CORS(app)
+
 
 # ============
 #  Endpoints
@@ -26,60 +28,87 @@ def drinks():
     """
     Return limited information for all drinks currently on the menu
     """
-    selection = Drink.query.all()
-    if len(selection) == 0:
+    drinks = Drink.query.all()
+    if len(drinks) == 0:
         abort(404)
-    drinks = [drink.short() for drink in selection]
 
-    return jsonify({"success": True, "drinks": drinks})
+    return jsonify({"success": True, "drinks": [drink.short() for drink in drinks]})
 
 
-# TODO: should require the get:drinks-detail permission
 @app.route("/drinks-detail")
+@requires_auth("get:drinks-detail")
 def drinks_detailed():
     """
     Return full information for all drinks currently on the menu
     """
-    selection = Drink.query.all()
-    if len(selection) == 0:
+    drinks = Drink.query.all()
+    if len(drinks) == 0:
         abort(404)
-    drinks = [drink.long() for drink in selection]
 
-    return jsonify({"success": True, "drinks": drinks})
+    return jsonify({"success": True, "drinks": [drink.long() for drink in drinks]})
 
 
-# TODO: should require the post:drinks permission
 @app.route("/drinks", methods=["POST"])
+@requires_auth("post:drinks")
 def create_drink():
     """
     Add a new drink to the menu
     """
+    body = request.get_json()
 
-    drink = "NEW DRINK"  # drink.long()
-    return jsonify({"success": True, "drinks": drink})
+    new_title = body.get("title")
+    new_recipe = json.dumps(body.get("recipe"))
+
+    try:
+        new_drink = Drink(title=new_title, recipe=new_recipe)
+        new_drink.insert()
+
+    except:
+        abort(422)
+
+    return jsonify({"success": True, "drinks": [new_drink.long()]})
 
 
-# TODO: should require the patch:drinks permission
-@app.route("/drinks", methods=["PATCH"])
-def update_drink():
+@app.route("/drinks/<int:drink_id>", methods=["PATCH"])
+@requires_auth("patch:drinks")
+def update_drink(drink_id):
     """
     Add a new drink to the menu
     """
+    body = request.get_json()
 
-    # should respond with a 404 error if <id> is not found
+    try:
+        drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+        if drink is None:
+            abort(404)
 
-    drink = "UPDATED DRINK"  # drink.long()
-    return jsonify({"success": True, "drinks": drink})
+        if body.get("title"):
+            drink.title = body.get("title")
+        if body.get("recipe"):
+            drink.recipe = json.dumps(body.get("recipe"))
+
+        drink.update()
+
+    except:
+        abort(422)
+
+    return jsonify({"success": True, "drinks": [drink.long()]})
 
 
-# TODO: should require the patch:drinks permission
 @app.route("/drinks/<int:id>", methods=["PATCH"])
+@requires_auth("delete:drinks")
 def delete_drink(drink_id):
     """
     Add a new drink to the menu
     """
+    try:
+        drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+        if drink is None:
+            abort(404)
 
-    # should respond with a 404 error if <id> is not found
+        drink.delete()
+    except:
+        abort(422)
 
     return jsonify({"success": True, "delete": drink_id})
 
@@ -98,22 +127,17 @@ def resource_not_found(error):
     return jsonify({"success": False, "error": 400, "message": "bad request"}), 400
 
 
-@app.errorhandler(401)
+@app.errorhandler(AuthError)
 def unauthorized(error):
-    return jsonify({"success": False, "error": 401, "message": "unauthorized"}), 401
-
-
-@app.errorhandler(403)
-def forbidden(error):
     return (
         jsonify(
             {
                 "success": False,
-                "error": 403,
-                "message": "forbidden - user does not have permission to access this resource",
+                "error": error.status_code,
+                "message": error.error.get("description"),
             }
         ),
-        403,
+        error.status_code,
     )
 
 
