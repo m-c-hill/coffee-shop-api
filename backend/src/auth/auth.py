@@ -5,15 +5,9 @@ from jose import jwt
 from urllib.request import urlopen
 
 
-AUTH0_DOMAIN = "udacity-fsnd.auth0.com"
+AUTH0_DOMAIN = "dev-t-0la1ih.us.auth0.com"  # TODO
 ALGORITHMS = ["RS256"]
 API_AUDIENCE = "dev"
-
-## AuthError Exception
-"""
-AuthError Exception
-A standardized way to communicate auth failure modes
-"""
 
 
 class AuthError(Exception):
@@ -22,68 +16,107 @@ class AuthError(Exception):
         self.status_code = status_code
 
 
-## Auth Header
-
-"""
-@TODO implement get_token_auth_header() method
-    it should attempt to get the header from the request
-        it should raise an AuthError if no header is present
-    it should attempt to split bearer and the token
-        it should raise an AuthError if the header is malformed
-    return the token part of the header
-"""
-
-
 def get_token_auth_header():
-    raise Exception("Not Implemented")
+    """
+    Retrieve the token from the request auth header
+    """
 
+    if "Authorization" not in request.headers:
+        raise AuthError(
+            {
+                "code": "auth_header_missing",
+                "description": "Authorization header is expected.",
+            },
+            401,
+        )
 
-"""
-@TODO implement check_permissions(permission, payload) method
-    @INPUTS
-        permission: string permission (i.e. 'post:drink')
-        payload: decoded jwt payload
+    auth_header = request.headers["Authorization"]
+    _validate_bearer_token(auth_header)
 
-    it should raise an AuthError if permissions are not included in the payload
-        !!NOTE check your RBAC settings in Auth0
-    it should raise an AuthError if the requested permission string is not in the payload permissions array
-    return true otherwise
-"""
+    return auth_header.split(" ")[1]
 
 
 def check_permissions(permission, payload):
-    raise Exception("Not Implemented")
+    """
+    Check the permissions list in the JWT payload contains the required permission.
+    """
+    if "permissions" not in payload:
+        raise AuthError(
+            {
+                "code": "empty_claims",
+                "description": "Permissions list not included in JWT",
+            },
+            401,
+        )
 
-
-"""
-@TODO implement verify_decode_jwt(token) method
-    @INPUTS
-        token: a json web token (string)
-
-    it should be an Auth0 token with key id (kid)
-    it should verify the token using Auth0 /.well-known/jwks.json
-    it should decode the payload from the token
-    it should validate the claims
-    return the decoded payload
-
-    !!NOTE urlopen has a common certificate error described here: https://stackoverflow.com/questions/50236117/scraping-ssl-certificate-verify-failed-error-for-http-en-wikipedia-org
-"""
+    if permission not in payload["permissions"]:
+        raise AuthError(
+            {"code": "unauthorized", "description": "Permission not found"}, 401
+        )
 
 
 def verify_decode_jwt(token):
-    raise Exception("Not Implemented")
+    # auth0 jwks docs: https://auth0.com/docs/secure/tokens/json-web-tokens/json-web-key-sets
+    jwks_url = urlopen(f'https://{AUTH0_DOMAIN}/.well-known/jwks.json')
+    jwks = json.loads(jwks_url.read())  # json web key set
 
+    # jwt lib docs: https://pyjwt.readthedocs.io/en/stable/usage.html
+    unverified_header = jwt.get_unverified_header(token)
+    
+    if 'kid' not in unverified_header:
+        raise AuthError({
+            'code': 'invalid_header',
+            'description': 'Authorization malformed.'
+        }, 401)
 
-"""
-@TODO implement @requires_auth(permission) decorator method
-    @INPUTS
-        permission: string permission (i.e. 'post:drink')
+    # retrieve RSA key
+    rsa_key = {}
+    for key in jwks['keys']:
+        if key['kid'] == unverified_header['kid']:
+            rsa_key = {
+                'kty': key['kty'],
+                'kid': key['kid'],
+                'use': key['use'],
+                'n': key['n'],
+                'e': key['e']
+            }
 
-    it should use the get_token_auth_header method to get the token
-    it should use the verify_decode_jwt method to decode the jwt
-    it should use the check_permissions method validate claims and check the requested permission
-    return the decorator which passes the decoded payload to the decorated method
-"""
+    # decode the jwt using the rsa key
+    if rsa_key:
+        try:
+            payload = jwt.decode(
+                token,
+                rsa_key,
+                algorithms=ALGORITHMS,
+                audience=API_AUDIENCE,
+                issuer='https://' + AUTH0_DOMAIN + '/'
+            )
+
+            return payload
+
+        except jwt.JWTClaimsError:
+            raise AuthError({
+                'code': 'invalid_claims',
+                'description': 'Invalid claims. Please, check the audience and issuer.'
+            }, 401)
+
+        except jwt.ExpiredSignatureError:
+            raise AuthError({
+                'code': 'token_expired',
+                'description': 'Token has expired.'
+            }, 401)
+
+        except Exception:
+            raise AuthError({
+                'code': 'invalid_header',
+                'description': 'Unable to parse authentication token.'
+            }, 400)
+
+    raise AuthError({
+                'code': 'invalid_header',
+                'description': 'Unable to find rsa key.'
+            }, 400)
+
 
 
 def requires_auth(permission=""):
@@ -94,7 +127,30 @@ def requires_auth(permission=""):
             payload = verify_decode_jwt(token)
             check_permissions(permission, payload)
             return f(payload, *args, **kwargs)
-
         return wrapper
-
     return requires_auth_decorator
+
+
+def _validate_bearer_token(header):
+    """
+    Helper function to check if the string 'bearer' preceeds the auth token
+    """
+    header_parts = header.split(" ")
+
+    if len(header_parts) != 2:
+        raise AuthError(
+            {
+                "code": "invalid_header",
+                "description": "Authorization header must have the format 'Bearer {{bearer_token}}'.",
+            },
+            401,
+        )
+
+    if header_parts[0].lower() != "bearer":
+        raise AuthError(
+            {"code": "invalid_header", "description": "The prefix has to be 'Bearer'."},
+            401,
+        )
+
+if __name__ == "__main__":
+    

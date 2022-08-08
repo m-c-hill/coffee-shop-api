@@ -1,12 +1,10 @@
-import os
-from flask import Flask, request, jsonify, abort
-from sqlalchemy import exc
 import json
+
+from flask import Flask, abort, jsonify, request
 from flask_cors import CORS
 
-from .database.models import db_drop_and_create_all, setup_db, Drink
 from .auth.auth import AuthError, requires_auth
-
+from .database.models import Drink, db_drop_and_create_all, setup_db
 
 # =============
 #  API Config
@@ -117,28 +115,10 @@ def delete_drink(drink_id):
 #  Error Handling
 # =================
 
-"""
-Example error handling for unprocessable entity
-"""
-
 
 @app.errorhandler(400)
 def resource_not_found(error):
     return jsonify({"success": False, "error": 400, "message": "bad request"}), 400
-
-
-@app.errorhandler(AuthError)
-def unauthorized(error):
-    return (
-        jsonify(
-            {
-                "success": False,
-                "error": error.status_code,
-                "message": error.error.get("description"),
-            }
-        ),
-        error.status_code,
-    )
 
 
 @app.errorhandler(404)
@@ -156,4 +136,18 @@ def unprocessable(error):
     return (
         jsonify({"success": False, "error": 500, "message": "server side error"}),
         500,
+    )
+
+
+@app.errorhandler(AuthError)
+def unauthorized(error):
+    return (
+        jsonify(
+            {
+                "success": False,
+                "error": error.status_code,
+                "message": error.error.get("description"),
+            }
+        ),
+        error.status_code,
     )
