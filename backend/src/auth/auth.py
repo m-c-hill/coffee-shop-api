@@ -5,9 +5,9 @@ from jose import jwt
 from urllib.request import urlopen
 
 
-AUTH0_DOMAIN = "dev-t-0la1ih.us.auth0.com"  # TODO
+AUTH0_DOMAIN = "dev-t-0la1ih.us.auth0.com"
 ALGORITHMS = ["RS256"]
-API_AUDIENCE = "dev"
+API_AUDIENCE = "coffee"
 
 
 class AuthError(Exception):
@@ -20,7 +20,6 @@ def get_token_auth_header():
     """
     Retrieve the token from the request auth header
     """
-
     if "Authorization" not in request.headers:
         raise AuthError(
             {
@@ -81,6 +80,7 @@ def verify_decode_jwt(token):
                 'e': key['e']
             }
 
+    breakpoint()
     # decode the jwt using the rsa key
     if rsa_key:
         try:
@@ -118,7 +118,6 @@ def verify_decode_jwt(token):
             }, 400)
 
 
-
 def requires_auth(permission=""):
     def requires_auth_decorator(f):
         @wraps(f)
@@ -151,6 +150,3 @@ def _validate_bearer_token(header):
             {"code": "invalid_header", "description": "The prefix has to be 'Bearer'."},
             401,
         )
-
-if __name__ == "__main__":
-    

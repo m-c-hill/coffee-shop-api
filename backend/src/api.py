@@ -12,7 +12,7 @@ from .database.models import Drink, db_drop_and_create_all, setup_db
 
 app = Flask(__name__)
 setup_db(app)
-db_drop_and_create_all()
+#db_drop_and_create_all()
 CORS(app)
 
 
@@ -35,10 +35,11 @@ def drinks():
 
 @app.route("/drinks-detail")
 @requires_auth("get:drinks-detail")
-def drinks_detailed():
+def drinks_detailed(jwt):
     """
     Return full information for all drinks currently on the menu
     """
+    breakpoint()
     drinks = Drink.query.all()
     if len(drinks) == 0:
         abort(404)
@@ -48,7 +49,7 @@ def drinks_detailed():
 
 @app.route("/drinks", methods=["POST"])
 @requires_auth("post:drinks")
-def create_drink():
+def create_drink(jwt):
     """
     Add a new drink to the menu
     """
@@ -60,7 +61,7 @@ def create_drink():
     try:
         new_drink = Drink(title=new_title, recipe=new_recipe)
         new_drink.insert()
-
+        breakpoint()
     except:
         abort(422)
 
@@ -69,7 +70,7 @@ def create_drink():
 
 @app.route("/drinks/<int:drink_id>", methods=["PATCH"])
 @requires_auth("patch:drinks")
-def update_drink(drink_id):
+def update_drink(jwt, drink_id):
     """
     Add a new drink to the menu
     """
@@ -95,7 +96,7 @@ def update_drink(drink_id):
 
 @app.route("/drinks/<int:id>", methods=["PATCH"])
 @requires_auth("delete:drinks")
-def delete_drink(drink_id):
+def delete_drink(jwt, drink_id):
     """
     Add a new drink to the menu
     """
