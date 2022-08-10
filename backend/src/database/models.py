@@ -45,9 +45,7 @@ def db_drop_and_create_all():
     ]
 
     for data in drink_data:
-        drink = Drink(
-        title=data["title"], recipe=data["recipe"]
-        )
+        drink = Drink(title=data["title"], recipe=data["recipe"])
         drink.insert()
 
 

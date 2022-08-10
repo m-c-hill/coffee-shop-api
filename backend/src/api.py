@@ -12,7 +12,7 @@ from .database.models import Drink, db_drop_and_create_all, setup_db
 
 app = Flask(__name__)
 setup_db(app)
-# db_drop_and_create_all()  # Uncomment to reset the local sqlite database
+db_drop_and_create_all()  # Uncomment to reset the local sqlite database
 CORS(app)
 
 
