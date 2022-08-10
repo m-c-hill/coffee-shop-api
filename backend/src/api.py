@@ -12,7 +12,7 @@ from .database.models import Drink, db_drop_and_create_all, setup_db
 
 app = Flask(__name__)
 setup_db(app)
-#db_drop_and_create_all()
+# db_drop_and_create_all()  # Uncomment to reset the local sqlite database
 CORS(app)
 
 
@@ -39,7 +39,6 @@ def drinks_detailed(jwt):
     """
     Return full information for all drinks currently on the menu
     """
-    breakpoint()
     drinks = Drink.query.all()
     if len(drinks) == 0:
         abort(404)
@@ -61,7 +60,6 @@ def create_drink(jwt):
     try:
         new_drink = Drink(title=new_title, recipe=new_recipe)
         new_drink.insert()
-        breakpoint()
     except:
         abort(422)
 
@@ -94,17 +92,17 @@ def update_drink(jwt, drink_id):
     return jsonify({"success": True, "drinks": [drink.long()]})
 
 
-@app.route("/drinks/<int:id>", methods=["PATCH"])
+@app.route("/drinks/<int:drink_id>", methods=["DELETE"])
 @requires_auth("delete:drinks")
 def delete_drink(jwt, drink_id):
     """
     Add a new drink to the menu
     """
-    try:
-        drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
-        if drink is None:
-            abort(404)
+    drink = Drink.query.filter(Drink.id == drink_id).one_or_none()
+    if drink is None:
+        abort(404)
 
+    try:
         drink.delete()
     except:
         abort(422)

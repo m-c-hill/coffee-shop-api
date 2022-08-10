@@ -23,12 +23,32 @@ def setup_db(app):
 def db_drop_and_create_all():
     db.drop_all()
     db.create_all()
-    # add one demo row which is helping in POSTMAN test
-    drink = Drink(
-        title="water", recipe='[{"name": "water", "color": "blue", "parts": 1}]'
-    )
 
-    drink.insert()
+    # Add dummy data
+    drink_data = [
+        {
+            "title": "water",
+            "recipe": '[{"name": "water", "color": "blue", "parts": 1}]',
+        },
+        {
+            "title": "matchashake",
+            "recipe": '[{"name": "milk", "color": "grey", "parts": 1 }, { "name": "matcha", "color":"green", "parts":3}]',
+        },
+        {
+            "title": "flatwhite",
+            "recipe": '[{ "name":"milk", "color":"grey", "parts":3 }, { "name":"coffee", "color":"brown", "parts":1}]',
+        },
+        {
+            "title": "cap",
+            "recipe": '[{"name": "foam", "color": "white", "parts": 1 }, { "name": "milk", "color": "grey", "parts": 2}, { "name": "coffee", "color": "brown", "parts": 1}]',
+        },
+    ]
+
+    for data in drink_data:
+        drink = Drink(
+        title=data["title"], recipe=data["recipe"]
+        )
+        drink.insert()
 
 
 class Drink(db.Model):
