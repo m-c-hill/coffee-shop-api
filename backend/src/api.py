@@ -30,7 +30,10 @@ def drinks():
     if len(drinks) == 0:
         abort(404)
 
-    return jsonify({"success": True, "drinks": [drink.short() for drink in drinks]}), 200
+    return (
+        jsonify({"success": True, "drinks": [drink.short() for drink in drinks]}),
+        200,
+    )
 
 
 @app.route("/drinks-detail")
@@ -52,7 +55,6 @@ def create_drink(jwt):
     """
     Add a new drink to the menu
     """
-    breakpoint()
     body = request.get_json()
 
     new_title = body.get("title")
