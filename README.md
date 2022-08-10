@@ -11,7 +11,7 @@ Requirements of the application were as follows:
 
 The focus of the project was on user authentication which means the actual functionality of the application has been kept barebones, with drink ingredients being represented by ratios of colours.
 
-\<INSERT SCREENSHOT HERE\>
+![image](https://user-images.githubusercontent.com/74383191/183863907-ade66a28-bf25-46f6-b527-574da67e9f72.png)
 
 The project was completed as the final project for the Identity and Authentication module of [Udacity's Full Stack Developer Nanodegree](https://www.udacity.com/course/full-stack-web-developer-nanodegree--nd0044).
 
@@ -297,7 +297,7 @@ This ensures that if the JWT's payload is altered (ie. extra permissions are add
 
 - Update information for a specific drink using information provided by the post request body.
 - Permissions required: patch:drinks
-- Example: `curl http://127.0.0.1:5000/drinks/2 -X POST -H "Content-Type: application/json" -d '{"recipe": [{color: "grey", name: "milk", parts: 1}, {color: "green", name: "matcha", parts: 3}]}'`
+- Example: `curl http://127.0.0.1:5000/drinks/2 -X PATCH -H "Content-Type: application/json" -d '{"recipe": [{color: "grey", name: "milk", parts: 1}, {color: "green", name: "matcha", parts: 3}]}'`
 
 ```
 {
@@ -326,7 +326,7 @@ This ensures that if the JWT's payload is altered (ie. extra permissions are add
 **DELETE /drinks/${drink_id}**
 
 - Remove a drink from the menu.
-- Permissions required: delete: drink
+- Permissions required: delete:drinks
 - `curl http://127.0.0.1:5000/drinks/3 -X DELETE`
 
 ```
