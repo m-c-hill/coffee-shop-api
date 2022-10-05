@@ -1,4 +1,4 @@
-# Coffee Shop Full Stack
+# Mocha Joe's Coffee Shop API
 
 This project involved creating a simple coffee shop application to demonstrate user authentication and authorization through Auth0. The application uses [Ionic](https://ionicframework.com/) as its frontend framework, supported by a [Flask](https://flask.palletsprojects.com/en/2.2.x/) backend.
 
